@@ -1,6 +1,7 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Channels;
 
 namespace NNostr.Client
@@ -80,21 +81,21 @@ namespace NNostr.Client
 
         private Task<bool> HandleIncomingMessage(string message, CancellationToken token)
         {
-            var json = JsonDocument.Parse(message).RootElement;
-            switch (json[0].GetString().ToLowerInvariant())
+            var json = JToken.Parse(message).Root;
+            switch (json[0].Value<string>().ToLowerInvariant())
             {
                 case "event":
-                    var subscriptionId = json[1].GetString();
-                    var evt = json[2].Deserialize<NostrEvent>();
+                    var subscriptionId = json[1].Value<string>();
+                    var evt = json[2].ToObject<NostrEvent>();
 
                     if (evt?.Verify() is true)
                     {
-                        EventsReceived?.Invoke(this, (subscriptionId, new[] {evt}));
+                        EventsReceived?.Invoke(this, (subscriptionId, new[] { evt }));
                     }
 
                     break;
                 case "notice":
-                    var noticeMessage = json[1].GetString();
+                    var noticeMessage = json[1].Value<string>();
                     NoticeReceived?.Invoke(this, noticeMessage);
                     break;
             }
@@ -135,13 +136,13 @@ namespace NNostr.Client
 
         public async Task PublishEvent(NostrEvent nostrEvent, CancellationToken token = default)
         {
-            var payload = JsonSerializer.Serialize(new object[] {"EVENT", nostrEvent});
+            var payload = JsonConvert.SerializeObject(new object[] { "EVENT", nostrEvent });
             await PendingOutgoingMessages.Writer.WriteAsync(payload, token);
         }
 
         public async Task CloseSubscription(string subscriptionId, CancellationToken token = default)
         {
-            var payload = JsonSerializer.Serialize(new[] {"CLOSE", subscriptionId});
+            var payload = JsonConvert.SerializeObject(new[] { "CLOSE", subscriptionId });
 
             await PendingOutgoingMessages.Writer.WriteAsync(payload, token);
         }
@@ -149,7 +150,10 @@ namespace NNostr.Client
         public async Task CreateSubscription(string subscriptionId, NostrSubscriptionFilter[] filters,
             CancellationToken token = default)
         {
-            var payload = JsonSerializer.Serialize(new object[] {"REQ", subscriptionId}.Concat(filters));
+            var payload = JsonConvert.SerializeObject(new object[] { "REQ", subscriptionId }.Concat(filters), settings: new JsonSerializerSettings()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+            });
 
             await PendingOutgoingMessages.Writer.WriteAsync(payload, token);
         }

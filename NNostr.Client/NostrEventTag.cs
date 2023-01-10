@@ -1,11 +1,6 @@
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using NNostr.Client.JsonConverters;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NNostr.Client
 {
@@ -16,17 +11,18 @@ namespace NNostr.Client
         public string Id { get; set; }
 
         public string EventId { get; set; }
+
         public string TagIdentifier { get; set; }
+
         public List<string> Data { get; set; } = new();
-        [JsonIgnore] public NostrEvent Event { get; set; }
+
+        [JsonIgnore]
+        public NostrEvent Event { get; set; }
 
         public override string ToString()
         {
             var d = TagIdentifier is null ? Data : Data.Prepend(TagIdentifier);
-            return JsonSerializer.Serialize(d, new JsonSerializerOptions()
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
+            return JsonConvert.SerializeObject(d);
         }
     }
 }

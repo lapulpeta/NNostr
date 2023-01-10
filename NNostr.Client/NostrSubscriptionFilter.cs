@@ -1,29 +1,28 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NNostr.Client.JsonConverters;
 
 namespace NNostr.Client
 {
     public class NostrSubscriptionFilter
     {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("ids")] public string[]? Ids { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("authors")] public string[]? Authors { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("kinds")] public int[]? Kinds { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("#e")] public string[]? EventId { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("#p")] public string[]? PublicKey { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("since")][JsonConverter(typeof(UnixTimestampSecondsJsonConverter))] public DateTimeOffset? Since { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("until")][JsonConverter(typeof(UnixTimestampSecondsJsonConverter))] public DateTimeOffset? Until { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("limit")] public int? Limit { get; set; }
+        [JsonProperty("ids")] public string[]? Ids { get; set; }
+        [JsonProperty("authors")] public string[]? Authors { get; set; }
+        [JsonProperty("kinds")] public int[]? Kinds { get; set; }
+        [JsonProperty("#e")] public string[]? EventId { get; set; }
+        [JsonProperty("#p")] public string[]? PublicKey { get; set; }
+        [JsonProperty("since")][JsonConverter(typeof(UnixTimestampSecondsJsonConverter))] public DateTimeOffset? Since { get; set; }
+        [JsonProperty("until")][JsonConverter(typeof(UnixTimestampSecondsJsonConverter))] public DateTimeOffset? Until { get; set; }
+        [JsonProperty("limit")] public int? Limit { get; set; }
 
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonExtensionData]
-        public IDictionary<string, JsonElement> ExtensionData { get; set; }
+        public IDictionary<string, JToken> ExtensionData { get; set; }
 
         public Dictionary<string, string[]> GetAdditionalTagFilters()
         {
-            var tagFilters = ExtensionData?.Where(pair => pair.Key.StartsWith("#") && pair.Value.ValueKind == JsonValueKind.Array);
+            var tagFilters = ExtensionData?.Where(pair => pair.Key.StartsWith("#") && pair.Value.Type == JTokenType.Array);
             return tagFilters?.ToDictionary(tagFilter => tagFilter.Key.Substring(1),
-                tagFilter => tagFilter.Value.EnumerateArray().ToEnumerable().Select(element => element.GetString())
+                tagFilter => tagFilter.Value.Select(element => element.Value<string>())
                     .ToArray())! ?? new Dictionary<string, string[]>();
         }
 

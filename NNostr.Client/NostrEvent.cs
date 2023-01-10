@@ -1,31 +1,34 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using NNostr.Client.JsonConverters;
 
 namespace NNostr.Client
 {
     public class NostrEvent: IEqualityComparer<NostrEvent>
     {
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("pubkey")]
+        [JsonProperty("pubkey")]
         public string PublicKey { get; set; }
-        [JsonPropertyName("created_at")]
+
+        [JsonProperty("created_at")]
         [JsonConverter(typeof(UnixTimestampSecondsJsonConverter))]
         public DateTimeOffset? CreatedAt { get; set; }
-        [JsonPropertyName("kind")]
+
+        [JsonProperty("kind")]
         public int Kind { get; set; }
-        [JsonPropertyName("content")]
-        [JsonConverter(typeof(StringEscaperJsonConverter))]
+
+        [JsonProperty("content")]
         public string Content { get; set; }
         
-        [JsonPropertyName("tags")]
+        [JsonProperty("tags")]
         public List<NostrEventTag> Tags { get; set; }
         
-        [JsonPropertyName("sig")]
+        [JsonProperty("sig")]
         public string Signature { get; set; }
         
-        [JsonIgnore] public bool Deleted { get; set; }
+        [JsonIgnore]
+        public bool Deleted { get; set; }
 
         public bool Equals(NostrEvent? x, NostrEvent? y)
         {

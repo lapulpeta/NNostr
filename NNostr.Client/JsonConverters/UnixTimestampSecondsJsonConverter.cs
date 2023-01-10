@@ -1,35 +1,33 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace NNostr.Client.JsonConverters
 {
     public class UnixTimestampSecondsJsonConverter : JsonConverter<DateTimeOffset?>
     {
-        public override DateTimeOffset? Read(ref Utf8JsonReader reader, Type typeToConvert,
-            JsonSerializerOptions options)
+        public override DateTimeOffset? ReadJson(JsonReader reader, Type objectType, DateTimeOffset? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonTokenType.Null)
+            if (reader.TokenType == JsonToken.Null)
             {
                 return null;
             }
 
-            if (reader.TokenType != JsonTokenType.Number)
+            if (reader.TokenType != JsonToken.Integer)
             {
                 throw new JsonException("datetime was not in number format");
             }
 
-            return DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64());
+            return DateTimeOffset.FromUnixTimeSeconds((long)reader.Value);
         }
 
-        public override void Write(Utf8JsonWriter writer, DateTimeOffset? value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, DateTimeOffset? value, JsonSerializer serializer)
         {
             if (value is null)
             {
-                writer.WriteNullValue();
+                writer.WriteNull();
             }
             else
             {
-                writer.WriteNumberValue(value.Value.ToUnixTimeSeconds());
+                writer.WriteValue(value.Value.ToUnixTimeSeconds());
             }
         }
     }
