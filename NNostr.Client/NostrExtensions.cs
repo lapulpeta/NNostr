@@ -19,6 +19,11 @@ namespace NNostr.Client
             });
         }
 
+        public static string ComputeEventId(this string eventJson)
+        {
+            return eventJson.ComputeSha256Hash().ToHex();
+        }
+
         public static string ComputeId(this NostrEvent nostrEvent)
         {
             return nostrEvent.ToJson(true).ComputeSha256Hash().ToHex();
